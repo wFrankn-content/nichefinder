@@ -153,7 +153,10 @@ export async function searchYouTube(
 ): Promise<VideoData[]> {
   const apiDuration = videoFilter === "shorts" ? "short" : undefined;
 
-  const ids = await searchVideoIds(keyword, maxResults, apiDuration);
+  // Over-fetch when a filter is active so client-side trimming still yields maxResults
+  const fetchCount = videoFilter === "all" ? maxResults : 50;
+
+  const ids = await searchVideoIds(keyword, fetchCount, apiDuration);
   if (ids.length === 0) return [];
 
   const videos = await fetchVideoDetails(ids);
@@ -165,5 +168,5 @@ export async function searchYouTube(
       ? videos.filter((v) => (v.duration_seconds ?? 999) > SHORTS_MAX_SECONDS)
       : videos;
 
-  return filtered.sort((a, b) => b.view_count - a.view_count);
+  return filtered.sort((a, b) => b.view_count - a.view_count).slice(0, maxResults);
 }
