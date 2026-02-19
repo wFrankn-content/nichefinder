@@ -39,12 +39,16 @@ async function searchVideoIds(
   maxResults = 20,
   videoDuration?: "short" | "medium" | "long"
 ): Promise<string[]> {
+  // Filter to last 30 days so results reflect current trends, not all-time popularity
+  const publishedAfter = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
   const params = new URLSearchParams({
     part: "id",
     q: keyword,
     type: "video",
     order: "viewCount",
     videoCategoryId: "20", // Gaming category
+    publishedAfter,
     maxResults: String(Math.min(maxResults, 50)),
     key: API_KEY!,
   });
