@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { VideoFilter } from "@/types";
 
 interface SearchPanelProps {
-  onSearch: (keyword: string, maxResults: number) => void;
+  onSearch: (keyword: string, maxResults: number, videoFilter: VideoFilter) => void;
   isLoading: boolean;
 }
 
@@ -18,19 +19,45 @@ const QUICK_KEYWORDS = [
   "Among Us",
 ];
 
+const VIDEO_FILTERS: { value: VideoFilter; label: string; icon: string; desc: string }[] = [
+  {
+    value: "all",
+    label: "All Videos",
+    icon: "M4 6h16M4 12h16M4 18h16",
+    desc: "Long-form and Shorts",
+  },
+  {
+    value: "longform",
+    label: "Long-form",
+    icon: "M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z",
+    desc: "> 3 minutes",
+  },
+  {
+    value: "shorts",
+    label: "Shorts",
+    icon: "M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z",
+    desc: "≤ 3 minutes",
+  },
+];
+
 export default function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
   const [keyword, setKeyword] = useState("");
   const [maxResults, setMaxResults] = useState(20);
+  const [videoFilter, setVideoFilter] = useState<VideoFilter>("all");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!keyword.trim() || isLoading) return;
-    onSearch(keyword.trim(), maxResults);
+    onSearch(keyword.trim(), maxResults, videoFilter);
   };
 
   const handleQuickKeyword = (kw: string) => {
     setKeyword(kw);
-    if (!isLoading) onSearch(kw, maxResults);
+    if (!isLoading) onSearch(kw, maxResults, videoFilter);
+  };
+
+  const handleFilterChange = (f: VideoFilter) => {
+    setVideoFilter(f);
   };
 
   return (
@@ -48,6 +75,7 @@ export default function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Search input row */}
         <div className="flex gap-3">
           <div className="flex-1 relative">
             <input
@@ -99,6 +127,43 @@ export default function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
           </button>
         </div>
 
+        {/* Video type toggle */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gaming-muted whitespace-nowrap">Video type:</span>
+          <div className="flex gap-1 bg-gaming-surface border border-gaming-border rounded-lg p-1">
+            {VIDEO_FILTERS.map((f) => {
+              const active = videoFilter === f.value;
+              return (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => handleFilterChange(f.value)}
+                  disabled={isLoading}
+                  title={f.desc}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                    active
+                      ? "bg-gaming-accent text-white shadow-sm"
+                      : "text-gaming-text-dim hover:text-gaming-text hover:bg-gaming-card"
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={f.icon} />
+                  </svg>
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+          <span className="text-xs text-gaming-muted">
+            {videoFilter === "shorts"
+              ? "Videos ≤ 3 min"
+              : videoFilter === "longform"
+              ? "Videos > 3 min"
+              : "All durations"}
+          </span>
+        </div>
+
+        {/* Quick-select keywords */}
         <div className="flex flex-wrap gap-2">
           <span className="text-xs text-gaming-muted py-1">Quick select:</span>
           {QUICK_KEYWORDS.map((kw) => (

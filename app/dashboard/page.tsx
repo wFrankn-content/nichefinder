@@ -5,14 +5,24 @@ import SearchPanel from "@/components/SearchPanel";
 import VideoTable from "@/components/VideoTable";
 import PatternSummary from "@/components/PatternSummary";
 import PromptOutput from "@/components/PromptOutput";
-import { SearchResponse } from "@/types";
+import { SearchResponse, VideoFilter } from "@/types";
+
+const FILTER_LABELS: Record<VideoFilter, string> = {
+  all: "All Videos",
+  longform: "Long-form",
+  shorts: "Shorts",
+};
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SearchResponse | null>(null);
 
-  const handleSearch = async (keyword: string, maxResults: number) => {
+  const handleSearch = async (
+    keyword: string,
+    maxResults: number,
+    videoFilter: VideoFilter
+  ) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -21,7 +31,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/youtube", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, maxResults }),
+        body: JSON.stringify({ keyword, maxResults, videoFilter }),
       });
 
       if (!res.ok) {
@@ -32,7 +42,6 @@ export default function DashboardPage() {
       const data: SearchResponse = await res.json();
       setResult(data);
 
-      // Scroll to results
       setTimeout(() => {
         document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
       }, 100);
@@ -45,7 +54,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-gaming-text">Research Dashboard</h1>
         <p className="text-gaming-text-dim text-sm mt-1">
@@ -53,7 +61,6 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Search */}
       <SearchPanel onSearch={handleSearch} isLoading={isLoading} />
 
       {/* Loading state */}
@@ -113,10 +120,22 @@ export default function DashboardPage() {
                 Results for{" "}
                 <span className="text-gaming-accent-light">"{result.keyword}"</span>
               </h2>
-              <p className="text-gaming-muted text-sm mt-0.5">
-                Found {result.videos.length} videos
-                {!result.demo && " · Saved to history"}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5 text-sm text-gaming-muted">
+                <span>{result.videos.length} videos</span>
+                {result.videoFilter && result.videoFilter !== "all" && (
+                  <>
+                    <span>·</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      result.videoFilter === "shorts"
+                        ? "bg-gaming-accent/15 text-gaming-accent-light"
+                        : "bg-gaming-success/15 text-gaming-success"
+                    }`}>
+                      {FILTER_LABELS[result.videoFilter]}
+                    </span>
+                  </>
+                )}
+                {!result.demo && <><span>·</span><span>Saved to history</span></>}
+              </div>
             </div>
             {!result.demo && (
               <div className="hidden sm:flex items-center gap-2 text-xs text-gaming-muted">
@@ -126,18 +145,13 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Pattern analysis */}
           <PatternSummary analysis={result.analysis} keyword={result.keyword} />
-
-          {/* Video table */}
           <VideoTable videos={result.videos} />
-
-          {/* AI Prompt */}
           <PromptOutput prompt={result.prompt} keyword={result.keyword} />
         </div>
       )}
 
-      {/* Empty state (no search yet) */}
+      {/* Empty state */}
       {!result && !isLoading && !error && (
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-3">
           <div className="w-16 h-16 bg-gaming-card border border-gaming-border rounded-2xl flex items-center justify-center">
