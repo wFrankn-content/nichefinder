@@ -48,6 +48,7 @@ async function searchVideoIds(
     type: "video",
     order: "viewCount",
     videoCategoryId: "20", // Gaming category
+    relevanceLanguage: "en",
     publishedAfter,
     maxResults: String(Math.min(maxResults, 50)),
     key: API_KEY!,
